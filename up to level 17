@@ -1,0 +1,248 @@
+package com.codegym.games.game2048;
+import com.codegym.engine.cell.*;
+/*
+2048 is a game where the user wants to move rows and collumns of a square grid of
+numbers to get the value 2048 in one of the squares. After every shift (up, down, left or right)
+the rows and collumms collapse and like values combine and add into one new values. As stated, the game is won
+once the user gets 2048 in one of the cells
+ */
+public class Game2048 extends Game {
+    private static final int SIDE = 4;
+    private int[][] gameField = new int[SIDE][SIDE];
+    private boolean isGameStopped = false;
+    // Initial set up
+    public void initialize () {
+        setScreenSize(SIDE, SIDE);
+        createGame();
+        drawScene();
+    }
+    // creates or recreates a new game
+    private void createGame () {
+        gameField = new int[SIDE][SIDE];
+        createNewNumber();
+        createNewNumber();
+    }
+    private void drawScene () {
+        for (int x = 0; x < SIDE; x++)
+            for (int y = 0; y < SIDE; y++)
+                setCellColoredNumber(y, x, gameField[x][y]);
+    }
+    // a randomly generated 2 or 4 is generated to add to the game field matrix after every turn
+    private void createNewNumber () {
+        int randomX = getRandomNumber(SIDE);
+        int randomY = getRandomNumber(SIDE);
+        int twoOrFour;
+        while (true) {
+            if (gameField[randomX][randomY] != 0) {
+                randomX = getRandomNumber(SIDE);
+                randomY = getRandomNumber(SIDE);
+            } else break;
+        }
+        if (getRandomNumber(10) < 1)
+            twoOrFour = 4;
+        else
+            twoOrFour = 2;
+        if (getMaxTileValue() == 2048)
+            win();
+        else
+            gameField[randomX][randomY] = twoOrFour;
+    }
+    private void setCellColoredNumber(int x, int y, int value) {
+        if (value != 0)
+            setCellValueEx(x, y, getColorByValue(value), Integer.toString(value));
+        else
+            setCellValueEx(x, y, getColorByValue(value), "");
+    }
+    // not sure I like the colors I picked here
+    private Color getColorByValue (int value) {
+        if (value == 0)
+            return Color.CYAN;
+        if (value == 2)
+            return Color.YELLOW;
+        if (value == 4)
+            return Color.YELLOWGREEN;
+        if (value == 8)
+            return Color.GREEN;
+        if (value == 16)
+            return Color.AQUA;
+        if (value == 32)
+            return Color.DEEPSKYBLUE;
+        if (value == 64)
+            return Color.VIOLET;
+        if (value == 128)
+            return Color.PURPLE;
+        if (value == 256)
+            return Color.PINK;
+        if (value == 512)
+            return Color.RED;
+        if (value == 1024)
+            return Color.ORANGE;
+        if (value == 2048)
+            return Color.GOLDENROD;
+        else
+            return null;
+    }
+    // Imbedded loops collapse the passed row and returns true or false if any changes were made
+    private boolean compressRow(int[] row) {
+        int holder;
+        boolean compress = false;
+        for (int l = 0; l < row.length - 1; l++)
+            for (int m = 0; m < row.length-1; m++) {
+                if (row[m] == 0 && row[m+1] != 0) {
+                    compress = true;
+                    for (int n = m; n < row.length-1; n++) {
+                        holder = row[n + 1];
+                        row[n + 1] = row[n];
+                        row[n] = holder;
+                }
+            }
+        }
+           return compress;
+    }
+    private boolean mergeRow(int[] row) {
+        boolean merge = false;
+            for (int m = 0; m < row.length-1; m++)
+                if (row[m] != 0 && row[m] == row[m + 1]) {
+                    merge = true;
+                    row[m] *= 2;
+                    row[m + 1] = 0;
+                }
+        return merge;
+    }
+    // The switch statement in the onKeyPress method gets the users command to change the gameField matrix
+    public void onKeyPress (Key key) {
+        if ( isGameStopped) {               // Checks if the game is stopped before the game over conditions
+            if (key == Key.SPACE)
+                restart();
+                return;
+        }
+        if (!canUserMove()) {
+            gameOver();
+            if (key == Key.SPACE){
+                restart();
+            }
+            return;
+        }
+        /*
+        if (!isGameStopped) {                   If I use this loop then then i get an "X" one
+            if (key == Key.LEFT)                the second from last condition
+                moveLeft();
+            if (key == Key.RIGHT)
+                moveRight();
+            if (key == Key.UP)
+                moveUp();
+            if (key == Key.DOWN)
+                moveDown();
+        }
+         */
+            switch (key) {                      // this block should not be reachable if the game is stopped
+                case LEFT:
+                    moveLeft();
+                    break;
+                case RIGHT:
+                    moveRight();
+                    break;
+                case UP:
+                    moveUp();
+                    break;
+                case DOWN:
+                    moveDown();
+                    break;
+                default:
+                    return;
+        }
+        drawScene();
+    }
+    // The restart method resets the playing field. Although it was not asked for by the game requirements,
+    // it was used in other games and I thought its insertion might have been implied
+    private void restart () {
+        isGameStopped = false;
+        createGame();
+        drawScene();
+    }
+    // The canUserMove method checks for zeros and then checks adjacent neighbor values by checking
+    // horizontal neighbors first and then vertical neighbors
+    private boolean canUserMove () {
+        for (int r = 0; r < SIDE; r++)
+            for (int c = 0; c < SIDE; c++)
+                if (gameField[r][c] == 0)
+                    return true;
+        for (int r = 0; r < SIDE-1; r++)
+            for (int c = 0; c < SIDE; c++)
+                if (gameField[r][c] == gameField[r+1][c])
+                        return true;
+        for (int r = 0; r < SIDE; r++)
+            for (int c = 0; c < SIDE - 1; c++)
+                if (gameField[r][c] == gameField[r][c + 1])
+                    return true;
+        return false;
+    }
+    // rotates the playing field so that one compress and merge pattern can
+    // be used for all directional moves
+    private void rotateClockwise () {
+        int[][] tempMat = new int[SIDE][SIDE];
+        for (int r = 0; r < SIDE; r++)
+            for (int c = 0; c < SIDE; c++) {
+                tempMat[c][SIDE - 1 - r] = gameField[r][c];
+            }
+        for (int r = 0; r < SIDE; r++)
+            for (int c = 0; c < SIDE; c++) {
+                gameField[r][c] = tempMat[r][c];
+            }
+    }
+    // moveLeft implements the compress and merge conditions
+    private void moveLeft () {
+        boolean compress;
+        boolean merge;
+        int move = 0;
+        for (int i = 0; i < SIDE; i++) {
+             compress = compressRow(gameField[i]);
+             merge = mergeRow(gameField[i]);
+             compressRow(gameField[i]);
+             if (merge || compress) move++;
+        } if (move > 0)
+            createNewNumber();
+    }
+    // the following 3 methods implement the moveLeft method according to their position
+    // after being rotated
+    private void moveRight () {
+        rotateClockwise();
+        rotateClockwise();
+        moveLeft();
+        rotateClockwise();
+        rotateClockwise();
+    }
+    private void moveUp () {
+        rotateClockwise();
+        rotateClockwise();
+        rotateClockwise();
+        moveLeft();
+        rotateClockwise();
+    }
+    private void moveDown () {
+        rotateClockwise();
+        moveLeft();
+        rotateClockwise();
+        rotateClockwise();
+        rotateClockwise();
+    }
+    // checks the highest value on the playing field
+    private int getMaxTileValue () {
+        int max = 0;
+        for (int r = 0; r < SIDE; r++)
+            for (int c = 0; c < SIDE; c++)
+                if (gameField[r][c] > max)
+                    max = gameField[r][c];
+        return max;
+    }
+    // win
+    private void win () {
+        isGameStopped = true;
+        showMessageDialog(Color.BLACK, "You Win", Color.WHITE, 5000);
+    }
+    // lose
+    private void gameOver () {
+        isGameStopped = true;
+        showMessageDialog(Color.BLACK, "Game Over", Color.RED, 5000);
+    }
+}
