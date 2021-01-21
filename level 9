@@ -1,0 +1,164 @@
+package com.codegym.games.game2048;
+import com.codegym.engine.cell.*;
+
+import java.util.*;
+
+public class Game2048 extends Game{
+    private static final int SIDE = 4;
+    private int [][] gameField = new int[SIDE][SIDE];
+
+    
+    private void createNewNumber(){
+        int x,y;
+        while(true){
+            x = getRandomNumber(SIDE);
+            y = getRandomNumber(SIDE);
+            if (gameField[x][y] == 0)
+                break;
+        }
+       
+        int probs = getRandomNumber(10);
+        if(probs == 9)
+            gameField[x][y] = 4;
+            else
+            gameField[x][y] = 2;
+    }
+    private Color getColorByValue(int value){
+        Color color = Color.WHITE;
+        switch (value) {
+          case 0:
+            color = Color.WHITE;
+            break;
+          case 2:
+            color = Color.PINK;
+            break;
+          case 4:
+            color = Color.PURPLE;
+            break;
+          case 8:
+            color = Color.BLUE;
+            break;
+          case 16:
+            color = Color.CYAN;
+            break;
+          case 32:
+            color = Color.GREEN;
+            break;
+          case 64:
+            color = Color.LIGHTGRAY;
+            break;
+          case 128:
+            color = Color.ORANGE;
+            break;
+          case 256:
+            color = Color.YELLOW;
+            break;
+          case 512:
+            color = Color.RED;
+            break;
+          case 1024:
+            color = Color.MAGENTA;
+            break;
+          case 2048:
+            color = Color.GRAY;
+            break;
+        }
+        
+        return color;   
+        
+    }
+        
+     private void setCellColoredNumber(int x, int y, int value){
+        Color color = getColorByValue(value);
+        if (value == 0)
+            setCellValueEx(x,y,color,"");
+            else
+            setCellValueEx(x,y,color,Integer.toString(value));
+    }
+    
+    
+    private void drawScene(){
+        for (int i = 0; i < SIDE; i++)
+            for(int j = 0; j < SIDE; j++){
+                setCellColoredNumber(j,i, gameField[i][j]);
+            }
+    }
+    
+    private void createGame(){
+        createNewNumber();
+        createNewNumber();
+        
+    }
+    
+    private boolean compressRow(int[] row){
+        int[] newRow = row.clone() ;
+        
+        
+        int n = row.length-1;
+        int start = 0;
+        
+        
+        for(int i = 0; i < row.length; i++){
+            if(newRow[i] == 0){
+                row[n] = newRow[i];
+                n--;
+            }
+            else{
+                row[start] = newRow[i];
+                start++;
+            }
+        }
+        
+         if(Arrays.equals(row, newRow)){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+    
+    private boolean mergeRow(int[] row){
+        int[] newRow = row.clone();
+        for (int i = 0; i < row.length-1; i++){
+            if(row[i+1] == row[i]){
+                row[i] += row[i+1];
+                row[i+1] = 0;
+                i++;
+            }
+        }
+        if(Arrays.equals(row, newRow)){
+            return false;
+        }
+        else{
+            return true;
+        }
+    }
+    
+    private void moveLeft(){
+
+    }
+    private void moveRight(){
+
+    }
+    private void moveUp(){
+
+    }
+    private void moveDown(){
+
+    }
+    
+    
+     @Override
+    public void initialize(){
+        setScreenSize(SIDE,SIDE);
+        createGame();
+        drawScene();
+    }
+
+    public void onKeyPress(Key key){
+       if( key == Key.LEFT) {
+           moveLeft();
+       }
+       else if(key == Key.RIGHT) {
+           moveRight();
+       }
